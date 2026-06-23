@@ -4,12 +4,27 @@ export type PresetKey =
   | "custom"
   | "instagram"
   | "facebook"
+  | "messenger"
   | "whatsapp"
   | "telegram"
   | "tiktok"
   | "youtube"
   | "twitter"
-  | "google-maps";
+  | "reddit"
+  | "pinterest"
+  | "linkedin"
+  | "snapchat"
+  | "discord"
+  | "google-maps"
+  | "amazon"
+  | "walmart"
+  | "target"
+  | "ebay"
+  | "etsy"
+  | "best-buy"
+  | "home-depot"
+  | "aliexpress"
+  | "shopify";
 
 export type DevicePlatform = "ios" | "android" | "desktop" | "unknown";
 

@@ -1,17 +1,6 @@
 import { normalizeSlug } from "./slug";
+import { detectPlatformByHost, getPlatformDefinition, getPlatformLabel } from "./platform-registry";
 import type { CreateLinkInput, PresetKey } from "./types";
-
-const presetLabels: Record<PresetKey, string> = {
-  custom: "Custom",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  whatsapp: "WhatsApp",
-  telegram: "Telegram",
-  tiktok: "TikTok",
-  youtube: "YouTube",
-  twitter: "X",
-  "google-maps": "Google Maps",
-};
 
 type InferredLink = {
   preset: PresetKey;
@@ -37,22 +26,10 @@ function hostnameFor(url: URL) {
 export function detectPresetFromUrl(input: string): PresetKey {
   try {
     const parsed = new URL(normalizeUrl(input));
-    const hostname = hostnameFor(parsed);
-    const path = parsed.pathname.toLowerCase();
-
-    if (hostname.includes("instagram.com")) return "instagram";
-    if (hostname.includes("facebook.com") || hostname === "fb.com") return "facebook";
-    if (hostname === "wa.me" || hostname.includes("whatsapp.com")) return "whatsapp";
-    if (hostname === "t.me" || hostname.includes("telegram")) return "telegram";
-    if (hostname.includes("tiktok.com")) return "tiktok";
-    if (hostname === "youtu.be" || hostname.includes("youtube.com")) return "youtube";
-    if (hostname === "x.com" || hostname.includes("twitter.com")) return "twitter";
-    if (hostname.includes("google.") && path.startsWith("/maps")) return "google-maps";
+    return detectPlatformByHost(parsed.hostname, parsed.pathname);
   } catch {
     return "custom";
   }
-
-  return "custom";
 }
 
 function slugFromUrl(input: string) {
@@ -93,6 +70,8 @@ function toIosScheme(preset: PresetKey, url: URL) {
     }
     case "facebook":
       return `fb://${url.hostname}${path}${url.search}`;
+    case "messenger":
+      return `fb-messenger-public://${url.hostname}${path}${url.search}`;
     case "whatsapp": {
       const phone = path.replace(/^\//, "");
       return phone ? `whatsapp://send?phone=${phone}` : undefined;
@@ -101,23 +80,39 @@ function toIosScheme(preset: PresetKey, url: URL) {
       const username = path.replace(/^\//, "");
       return username ? `tg://resolve?domain=${username}` : undefined;
     }
+    case "reddit":
+      return `reddit://${url.hostname}${path}${url.search}`;
+    case "pinterest":
+      return `pinterest://${url.hostname}${path}${url.search}`;
+    case "linkedin":
+      return `voyager://${url.hostname}${path}${url.search}`;
+    case "snapchat":
+      return `snapchat://${url.hostname}${path}${url.search}`;
+    case "discord":
+      return `discord://${url.hostname}${path}${url.search}`;
+    case "google-maps":
+      return `comgooglemaps://?q=${encodeURIComponent(url.toString())}`;
+    case "amazon":
+      return `com.amazon.mobile.shopping.web://${url.hostname}${path}${url.search}`;
+    case "walmart":
+    case "target":
+    case "ebay":
+    case "etsy":
+    case "best-buy":
+    case "home-depot":
+    case "aliexpress": {
+      const scheme = getPlatformDefinition(preset)?.iosScheme;
+      return scheme ? `${scheme}://${url.hostname}${path}${url.search}` : undefined;
+    }
     default:
       return url.protocol === "https:" ? `googlechromes://${url.hostname}${path}${url.search}` : `googlechrome://${url.hostname}${path}${url.search}`;
   }
 }
 
 function toAndroidIntent(preset: PresetKey, url: URL) {
-  const packages: Partial<Record<PresetKey, string>> = {
-    youtube: "com.google.android.youtube",
-    instagram: "com.instagram.android",
-    tiktok: "com.zhiliaoapp.musically",
-    twitter: "com.twitter.android",
-    facebook: "com.facebook.katana",
-    whatsapp: "com.whatsapp",
-    telegram: "org.telegram.messenger",
-  };
-
-  const pkg = packages[preset] || "com.android.chrome";
+  const definition = getPlatformDefinition(preset);
+  const pkg = definition?.androidPackage || "com.android.chrome";
+  const scheme = definition?.androidScheme || (preset === "custom" || preset === "shopify" ? "https" : "https");
   const fallback = encodeURIComponent(url.toString());
 
   if (preset === "whatsapp") {
@@ -130,7 +125,7 @@ function toAndroidIntent(preset: PresetKey, url: URL) {
     return username ? `intent://resolve?domain=${username}#Intent;scheme=tg;package=${pkg};S.browser_fallback_url=${fallback};end;` : undefined;
   }
 
-  return `intent://${url.hostname}${url.pathname}${url.search}#Intent;scheme=https;package=${pkg};S.browser_fallback_url=${fallback};end;`;
+  return `intent://${url.hostname}${url.pathname}${url.search}#Intent;scheme=${scheme};package=${pkg};S.browser_fallback_url=${fallback};end;`;
 }
 
 export function inferLinkFromDestination(input: string): InferredLink {
@@ -141,7 +136,7 @@ export function inferLinkFromDestination(input: string): InferredLink {
     const parsed = new URL(desktopUrl);
     return {
       preset,
-      title: `${presetLabels[preset]} smart link`,
+      title: `${getPlatformLabel(preset)} smart link`,
       slug: slugFromUrl(desktopUrl),
       desktopUrl,
       iosDeepLink: toIosScheme(preset, parsed) ?? desktopUrl,
@@ -150,7 +145,7 @@ export function inferLinkFromDestination(input: string): InferredLink {
   } catch {
     return {
       preset,
-      title: `${presetLabels[preset]} smart link`,
+      title: `${getPlatformLabel(preset)} smart link`,
       slug: normalizeSlug(input),
       desktopUrl,
       iosDeepLink: desktopUrl,

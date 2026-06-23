@@ -8,7 +8,9 @@ Phase 3 ports the protected DeepLinkOS core behavior into the clean app. It is n
 
 - Link validation and update validation.
 - Slug normalization and random slug creation.
-- Destination inference for Instagram, YouTube, WhatsApp, Telegram, TikTok, X/Twitter, Facebook, Google Maps, and custom links.
+- Destination inference for major social, commerce, marketplace, and custom links.
+- Platform registry for Instagram, YouTube, WhatsApp, Telegram, TikTok, X/Twitter, Facebook, Messenger, Reddit, Pinterest, LinkedIn, Snapchat, Discord, Google Maps, Amazon, Walmart, Target, eBay, Etsy, Best Buy, Home Depot, AliExpress, Shopify stores, and custom links.
+- Server-side link preview endpoint for metadata, Open Graph image, and favicon detection.
 - Platform detection and destination resolution.
 - Request insight helpers for browser, OS, referrer, bot, and prefetch detection.
 - Password/IP hashing helpers.
@@ -34,6 +36,7 @@ Phase 3 ports the protected DeepLinkOS core behavior into the clean app. It is n
 - Click rows include device, OS, browser, referrer, country, IP hash, variant, and UTM fields.
 - Default-domain links resolve only where `domain_id is null`.
 - Custom-domain requests resolve through an active domain record.
+- Affiliate parameters are preserved because inference keeps the original destination URL and query string intact.
 
 ## Verification
 
