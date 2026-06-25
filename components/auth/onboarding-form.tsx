@@ -3,11 +3,10 @@
 type OnboardingFormProps = {
   firstName?: string | null;
   lastName?: string | null;
-  workspaceName?: string | null;
   next?: string;
 };
 
-export function OnboardingForm({ firstName, lastName, workspaceName, next = "/dashboard" }: OnboardingFormProps) {
+export function OnboardingForm({ firstName, lastName, next = "/dashboard" }: OnboardingFormProps) {
   return (
     <form className="auth-form" action="/api/onboarding" method="POST">
       <input type="hidden" name="next" value={next} />
@@ -22,11 +21,6 @@ export function OnboardingForm({ firstName, lastName, workspaceName, next = "/da
           <input name="last_name" autoComplete="family-name" defaultValue={lastName ?? ""} required />
         </label>
       </div>
-
-      <label>
-        Workspace name
-        <input name="workspace_name" autoComplete="organization" defaultValue={workspaceName ?? "DeepLinkOS workspace"} required />
-      </label>
 
       <button className="btn btn-primary" type="submit">
         Continue to dashboard

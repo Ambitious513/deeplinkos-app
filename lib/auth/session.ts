@@ -58,7 +58,7 @@ export async function requireAuth(next = "/dashboard") {
   }
 
   if (!state.user) {
-    redirect(`/login?next=${encodeURIComponent(next)}`);
+    redirect(`/?auth=login&next=${encodeURIComponent(next)}`);
   }
 
   return state;

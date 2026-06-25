@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePublicAuth } from "@/components/auth/public-auth-shell";
 import type { DetectedPlatform, LinkGeneratorAdapter } from "@/lib/types";
 
 type HeroGeneratorPanelProps = {
@@ -22,6 +23,7 @@ const fallbackDetector = (url: string): DetectedPlatform => {
 };
 
 export function HeroGeneratorPanel({ adapter }: HeroGeneratorPanelProps) {
+  const { ensureGeneratorAccess } = usePublicAuth();
   const [url, setUrl] = useState("");
   const [hasError, setHasError] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -30,18 +32,36 @@ export function HeroGeneratorPanel({ adapter }: HeroGeneratorPanelProps) {
     return adapter?.detectPlatform?.(url) ?? fallbackDetector(url);
   }, [adapter, url]);
 
+  async function completeGeneration(destinationUrl: string) {
+    if (adapter?.generate) {
+      await adapter.generate(destinationUrl);
+      return;
+    }
+
+    setSuccess(true);
+  }
+
+  useEffect(() => {
+    async function handleAuthorized(event: Event) {
+      const detail = (event as CustomEvent<{ url?: string }>).detail;
+      if (!detail?.url || detail.url !== url) return;
+      setHasError(false);
+      await completeGeneration(detail.url);
+    }
+
+    window.addEventListener("deeplinkos:generator-authorized", handleAuthorized);
+    return () => window.removeEventListener("deeplinkos:generator-authorized", handleAuthorized);
+  }, [adapter, url]);
+
   async function handleGenerate() {
     const valid = isValidUrl(url);
     setHasError(!valid);
     setSuccess(false);
     if (!valid) return;
 
-    if (adapter?.generate) {
-      await adapter.generate(url);
-      return;
-    }
-
-    setSuccess(true);
+    const canGenerate = await ensureGeneratorAccess(url);
+    if (!canGenerate) return;
+    await completeGeneration(url);
   }
 
   function handleAdvanced() {

@@ -19,14 +19,13 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     <section className="auth-page">
       <div className="auth-panel">
         <div className="eyebrow">Workspace setup</div>
-        <h1 className="auth-title">Finish your profile</h1>
-        <p className="auth-copy">We use this to personalize your dashboard and keep billing, domains, and API access tied to the right workspace.</p>
+        <h1 className="auth-title">Tell us what to call you</h1>
+        <p className="auth-copy">Your workspace is ready. Add your name so the dashboard feels like yours from the first click.</p>
         {!state.configured ? <p className="form-alert">Supabase env vars are not configured yet. This onboarding screen is ready for the deployed app.</p> : null}
         {error ? <p className="form-alert form-alert--error">{error}</p> : null}
         <OnboardingForm
           firstName={state.profile?.first_name}
           lastName={state.profile?.last_name}
-          workspaceName={state.profile?.workspace_name}
           next={next}
         />
       </div>
